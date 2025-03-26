@@ -83,7 +83,19 @@ ros2 launch robot_killer teleop.launch.py lidar_port:=/dev/ttyUSB0 imu_port:=/de
 ros2 launch robot_killer teleop_slam.launch.py lidar_port:=/dev/ttyUSB0 imu_port:=/dev/ttyUSB1 esp32_port:=/dev/ttyUSB2
 ```
 
-### Step 2: Create a Complete Map
+### Step 2: Test SLAM with round1.launch.py
+
+```bash
+# Launch SLAM directly with round1.launch.py
+ros2 launch robot_killer round1.launch.py mode:=slam lidar_port:=/dev/ttyUSB0 imu_port:=/dev/ttyUSB1 esp32_port:=/dev/ttyUSB2
+```
+
+For manual control while using round1.launch.py, open another terminal and run:
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+### Step 3: Create a Complete Map
 
 Mapping best practices:
 - Drive slowly around the perimeter first
@@ -91,7 +103,7 @@ Mapping best practices:
 - Close loops to improve accuracy
 - Cover the entire test environment
 
-### Step 3: Save the Map
+### Step 4: Save the Map
 
 ```bash
 # Save the map when finished
@@ -127,11 +139,19 @@ In RViz:
 ros2 launch robot_killer main.launch.py mode:=nav map_file:=robot_killer/maps/test_area.yaml
 ```
 
+### Step 4: Test Direct round1 Navigation
+
+```bash
+# Test round1.launch.py directly with navigation mode
+ros2 launch robot_killer round1.launch.py mode:=nav map_file:=robot_killer/maps/test_area.yaml lidar_port:=/dev/ttyUSB0 imu_port:=/dev/ttyUSB1 esp32_port:=/dev/ttyUSB2
+```
+
 #### Verification Tasks:
 - [ ] Robot correctly localizes in the map
 - [ ] Path planning works for various destinations
 - [ ] Robot follows planned paths accurately
 - [ ] Recovery behaviors work when path is blocked
+- [ ] round1.launch.py works correctly with explicit parameters
 
 ## Day 4: Autonomous Features Testing
 
@@ -145,11 +165,18 @@ ros2 run robot_killer temperature_simulator
 ### Step 2: Test Full Autonomous Mode
 
 ```bash
-# Launch autonomous navigation
+# Launch autonomous navigation with main.launch.py
 ros2 launch robot_killer main.launch.py mode:=nav autonomous:=true map_file:=robot_killer/maps/test_area.yaml
 ```
 
-### Step 3: Keep Emergency Teleop Ready
+### Step 3: Test Full Autonomous Mode with round1
+
+```bash
+# Launch autonomous navigation with round1.launch.py directly
+ros2 launch robot_killer round1.launch.py mode:=nav autonomous:=true map_file:=robot_killer/maps/test_area.yaml lidar_port:=/dev/ttyUSB0 imu_port:=/dev/ttyUSB1 esp32_port:=/dev/ttyUSB2
+```
+
+### Step 4: Keep Emergency Teleop Ready
 
 ```bash
 # In another terminal, for emergency control
@@ -218,6 +245,40 @@ If multiple devices try to use the same port:
 
 ## Launch Commands Reference
 
+### Using round1.launch.py (CORE LAUNCH FILE)
+
+The round1.launch.py file is the CORE coordinator of the entire system. While main.launch.py is a simplified entry point, round1.launch.py provides direct access to all system parameters and components.
+
+```bash
+# Basic round1 with SLAM mode
+ros2 launch robot_killer round1.launch.py mode:=slam lidar_port:=/dev/ttyUSB0 imu_port:=/dev/ttyUSB1 esp32_port:=/dev/ttyUSB2
+
+# round1 with navigation mode
+ros2 launch robot_killer round1.launch.py mode:=nav map_file:=robot_killer/maps/test_area.yaml lidar_port:=/dev/ttyUSB0 imu_port:=/dev/ttyUSB1 esp32_port:=/dev/ttyUSB2
+
+# round1 with autonomous features
+ros2 launch robot_killer round1.launch.py mode:=nav autonomous:=true map_file:=robot_killer/maps/test_area.yaml
+```
+
+#### Key round1.launch.py Parameters:
+
+- `mode`: Either 'slam' or 'nav' (required)
+- `autonomous`: 'true' or 'false' to enable autonomous operation
+- `map_file`: Full path to the map file (required for nav mode)
+- `use_rviz`: 'true' or 'false' to enable visualization
+- `lidar_port`, `imu_port`, `esp32_port`: Serial port assignments
+- `rviz_config_file`: Path to custom RViz configuration
+
+#### When to Use round1.launch.py Directly:
+
+You should use round1.launch.py directly when:
+1. You need fine-grained control over all system components
+2. You're debugging specific subsystem interactions
+3. You want to modify the full set of parameters
+4. You're setting up custom component configurations
+
+round1.launch.py is the heart of your robot system - it handles conditional launching of components based on mode, manages parameter passing between components, and coordinates the entire ROS 2 graph.
+
 ### Basic Launch Options
 
 ```bash
@@ -279,30 +340,35 @@ ros2 param get /node_name parameter_name
 
 ## System Architecture Summary
 
-1. **Hardware Layer**
+1. **Launch System**
+   - main.launch.py: Top-level simplified entry point
+   - **round1.launch.py**: CORE coordinator that handles all components
+   - Component-specific launch files for individual functionality
+
+2. **Hardware Layer**
    - LiDAR provides scan data
    - IMU provides orientation
    - ESP32 handles motor control and odometry
 
-2. **Transform System**
+3. **Transform System**
    - robot_state_publisher provides transforms from URDF
    - All sensors positioned correctly in robot frame
 
-3. **Mapping System**
+4. **Mapping System**
    - SLAM Toolbox creates and updates maps
    - Map server provides maps for navigation
 
-4. **Navigation System**
+5. **Navigation System**
    - AMCL for localization
    - Nav2 planner for path planning
    - Nav2 controller for path following
 
-5. **Autonomous Layer**
+6. **Autonomous Layer**
    - mission_controller handles high-level behavior
    - fire_detector identifies potential fires
    - Map-based navigation to mission objectives
 
-6. **User Interface**
+7. **User Interface**
    - RViz for visualization
    - Teleop for manual control
    - Status reporting for mission feedback
