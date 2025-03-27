@@ -1,15 +1,30 @@
 # Robot Killer ROS2 Package
 
-## Overview
+## Competition Overview
 
-The Robot Killer package is a comprehensive ROS2 solution that integrates various robotics components for autonomous navigation, mapping, and control. This package provides a unified system for:
+This package is designed for the Firefighting Robot Competition, where autonomous robots assist in firefighting operations. The competition consists of three rounds with increasing difficulty, with only one robot in the game field at any time.
 
-- SLAM (Simultaneous Localization and Mapping)
-- Autonomous Navigation
-- Sensor Integration (LiDAR, IMU, ESP32)
-- Motion Control
-- Fire Detection and Response
-- Visualization
+### Round 1: Surveying the field and spotting the location of fire
+
+In Round 1, the robot is tasked with surveying the game field to spot the location of fire. Robots are assessed based on the following criteria:
+
+- Ability to avoid obstacles (no terrain challenges)
+- Closeness of the robot to the location of fire
+- Closeness of the robot to the starting region at the end of the trip
+- Time taken to complete the trip
+
+The Robot Killer package provides a comprehensive solution to excel in these tasks through autonomous navigation, mapping, and fire detection capabilities.
+
+## System Capabilities
+
+The Robot Killer package is a comprehensive ROS2 solution that integrates various robotics components for:
+
+- SLAM (Simultaneous Localization and Mapping) for environment mapping
+- Autonomous Navigation with obstacle avoidance
+- Temperature-based Fire Detection and Localization
+- Mission Control for end-to-end autonomous operation
+- Return-to-start functionality
+- Performance timing and statistics
 
 ## Project Structure
 
@@ -28,19 +43,35 @@ robot_killer/
 │   ├── navigation.launch.py # Navigation stack launch
 │   ├── robot_hardware.launch.py # Combined hardware launch
 │   ├── robot_state_publisher.launch.py # Robot state publishing
-│   ├── round1.launch.py    # Comprehensive system launch
+│   ├── round1.launch.py    # Competition Round 1 optimized launch
 │   ├── rviz.launch.py      # Visualization launch
 │   ├── slam.launch.py      # SLAM launch
 │   └── twist_to_ackermann.launch.py # Motion converter launch
 ├── maps/                   # Map storage directory
 ├── robot_killer/           # Python package
 │   ├── __init__.py
-│   ├── mission_controller.py  # Mission control logic
+│   ├── mission_controller.py  # Mission control for Round 1 tasks
 │   ├── fire_deector_node.py   # Fire detection node
 │   ├── temerature_simulator.py # Temperature simulation
 │   └── my_node.py          # Example ROS2 node
 └── resource/               # Package resources
 ```
+
+## Round 1 Mission Strategy
+
+The Robot Killer package implements a strategic mission approach for Round 1:
+
+1. **Initial Mapping**: The robot creates a map of the environment, identifying open spaces and obstacles.
+
+2. **Systematic Exploration**: Using the Mission Controller, the robot navigates in a carefully planned pattern to efficiently cover the entire game field.
+
+3. **Fire Detection**: Continuous monitoring of temperature readings identifies potential fire locations with high confidence, minimizing false positives.
+
+4. **Optimal Approach**: When a fire is detected, the robot navigates to the precise location while maintaining safe distance.
+
+5. **Efficient Return**: After fire localization, the robot returns to the starting region via the most efficient path.
+
+6. **Performance Metrics**: The system logs key performance metrics (time, distances, accuracy) for competition scoring.
 
 ## Hardware Components
 
@@ -63,7 +94,7 @@ This package integrates three key hardware components:
 
 ## Launch System Architecture
 
-Our launch system follows a hierarchical structure to organize the various components. Understanding this architecture is **crucial** for effectively working with and extending the system.
+Our launch system follows a hierarchical structure to organize the various components.
 
 ### Launch Files Hierarchy
 
@@ -90,11 +121,11 @@ main.launch.py
    - **USE THIS FOR NORMAL OPERATION**
 
 2. **round1.launch.py**
-   - The comprehensive "all-in-one" launch file
-   - Coordinates ALL components of the robot system
+   - Optimized specifically for the Round 1 competition requirements
+   - Coordinates ALL components with parameters tuned for competition performance
    - Provides fine-grained control over components
    - Includes conditional launching based on mode and flags
-   - **USE THIS FOR CUSTOM CONFIGURATIONS**
+   - **USE THIS FOR COMPETITION CONFIGURATION**
 
 3. **robot_hardware.launch.py**
    - Launches only the hardware components (LiDAR, IMU, ESP32)
@@ -150,46 +181,64 @@ These files handle individual robot components and are included by the higher-le
 - **use_rviz**: `true` (show visualization) or `false` (headless operation)
 - **use_sim_time**: `false` (real hardware) or `true` (simulation)
 
-### Running the Robot
+### Competition Launch Configuration
 
-#### Standard Operation
-
-For typical use with all components, use the main launch file:
+For optimal performance in the competition:
 
 ```bash
-# Default: SLAM mode, manual control, with visualization
-ros2 launch robot_killer main.launch.py
+# Round 1 autonomous operation with mapping
+ros2 launch robot_killer main.launch.py mode:=slam autonomous:=true
 
-# Navigation mode with autonomous operation
-ros2 launch robot_killer main.launch.py mode:=nav autonomous:=true
-
-# SLAM without visualization (headless)
-ros2 launch robot_killer main.launch.py use_rviz:=false
+# Round 1 with pre-existing map
+ros2 launch robot_killer main.launch.py mode:=nav autonomous:=true map_file:=/path/to/map.yaml
 ```
 
-#### Advanced Configuration
+### Testing and Practice
 
-For more detailed configuration, use round1.launch.py directly:
-
+For practice and testing:
 ```bash
-# Navigation with custom map file
-ros2 launch robot_killer round1.launch.py mode:=nav map_file:=/path/to/map.yaml
+# Manual control with mapping for practice
+ros2 launch robot_killer main.launch.py mode:=slam autonomous:=false
 
-# Full autonomous mission with specific parameters
-ros2 launch robot_killer round1.launch.py mode:=nav autonomous:=true
-```
-
-#### Testing Individual Components
-
-```bash
-# Test just the hardware components
+# Test hardware systems
 ros2 launch robot_killer robot_hardware.launch.py
-
-# Test individual sensors
-ros2 launch robot_killer lidar.launch.py
-ros2 launch robot_killer bno055.launch.py
-ros2 launch robot_killer esp32.launch.py
 ```
+
+## Mission Control System
+
+The mission control system is the core of the Round 1 solution. It implements:
+
+1. **Exploration Strategy**: Efficient waypoint generation for systematic field coverage
+2. **Fire Detection Integration**: Real-time processing of temperature data
+3. **Return-to-Start Logic**: Ensures the robot returns to the starting region
+4. **Performance Timing**: Tracks mission time for competition scoring
+5. **State Management**: Advanced state machine manages the entire mission flow
+
+### Mission States
+
+1. **INIT**: Sets up exploration waypoints in optimal pattern
+2. **EXPLORING**: Navigates to waypoints, seeking fire locations
+3. **APPROACHING_FIRE**: When fire detected, approaches optimal position
+4. **AT_FIRE**: Records precise fire location for scoring
+5. **RETURNING**: Navigates back to starting position for final scoring
+6. **COMPLETED**: Finalizes mission and reports performance metrics
+7. **IDLE**: Mission complete, ready for evaluation
+
+## Fire Detection System
+
+The fire detection system:
+1. Monitors temperature readings from sensors
+2. Uses confidence thresholds to ensure reliable detection
+3. Records precise fire location coordinates when detected
+4. Publishes visualization markers for operation monitoring
+
+### Performance Optimization
+
+The system parameters are tuned for Round 1 competition success:
+- **Exploration radius**: Optimized for field coverage vs. time
+- **Fire approach distance**: Balanced for detection accuracy and safety
+- **Temperature thresholds**: Calibrated for reliable fire detection
+- **Navigation parameters**: Tuned for obstacle avoidance and time efficiency
 
 ## Hardware Setup and Configuration
 
@@ -296,19 +345,10 @@ source install/setup.bash
 - Verify ESP32 is responding to commands
 - Monitor ROS topics for sensor data: `ros2 topic echo /scan` for LiDAR, etc.
 
-### Transform Issues
-- If you see `TF_DENORMALIZED_QUATERNION` warnings, check the transforms in the URDF
-- TF errors like "No transform from X to Y" usually indicate that a frame ID doesn't match between the URDF and sensor configuration
-- Use `ros2 run tf2_tools view_frames` to visualize the TF tree and check for issues
-
-## Development Guidelines
-
-When extending this system:
-
-1. **Add new launch files** for any new components
-2. **Update round1.launch.py** to integrate new components
-3. **Document parameters** in this README
-4. **Test individual components** before integration
+### Round 1 Specific Issues
+- If fire detection is unreliable, check temperature thresholds
+- If return-to-start is inaccurate, verify odometry and IMU calibration
+- For slow performance, adjust navigation speed parameters
 
 ## Dependencies
 
