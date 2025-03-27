@@ -224,6 +224,56 @@ The mission control system is the core of the Round 1 solution. It implements:
 6. **COMPLETED**: Finalizes mission and reports performance metrics
 7. **IDLE**: Mission complete, ready for evaluation
 
+## Hardware Diagnostics System
+
+**NEW!** The Robot Killer package includes a comprehensive hardware diagnostics system that provides real-time monitoring and health status of all robot components. This is **CRITICAL** for competition success, as it enables immediate detection of hardware or software issues.
+
+### Key Features
+
+- **Complete Hardware Monitoring**: Tracks the status of LIDAR, IMU, ESP32 controller, and system resources
+- **Real-time Data Quality Analysis**: Evaluates sensor data quality to detect degraded performance
+- **Mission Status Integration**: Shows current mission phase, fire detection status, and elapsed time
+- **System Resource Tracking**: Monitors CPU temperature, CPU usage, and memory consumption
+- **Early Warning System**: Provides immediate alerts when any component is degraded or offline
+- **User-friendly Diagnostics Display**: Publishes both detailed diagnostics and a human-readable summary
+
+### Competition Advantages
+
+The diagnostics system provides **SIGNIFICANT ADVANTAGES** for Round 1:
+
+1. **Problem Prevention**: Detect and resolve issues before they impact performance
+2. **Performance Optimization**: Monitor real-time system load to prevent thermal throttling
+3. **Rapid Troubleshooting**: Quickly identify the exact component causing issues
+4. **Mission Tracking**: Monitor mission progress and performance metrics in real-time
+5. **Enhanced Reliability**: Ensure all sensors are working optimally throughout the mission
+
+### Usage
+
+The diagnostics system runs automatically with all launch configurations:
+
+```bash
+# Diagnostics are integrated with all launches
+ros2 launch robot_killer main.launch.py mode:=slam autonomous:=true
+
+# View diagnostic summary in terminal
+ros2 topic echo /diagnostics_summary
+
+# View detailed diagnostics
+ros2 topic echo /diagnostics
+```
+
+The system publishes information on two topics:
+- **/diagnostics**: Detailed diagnostic information in standard ROS2 format
+- **/diagnostics_summary**: Human-readable summary of system status
+
+### Integration with RViz
+
+The hardware diagnostics can be visualized in RViz using the Diagnostics display plugin:
+
+1. In RViz, click "Add" → "By display type" → "Diagnostic" → "OK"
+2. Select "/diagnostics" as the topic
+3. Expand the display to see all hardware components status
+
 ## Fire Detection System
 
 The fire detection system:

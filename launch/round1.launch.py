@@ -244,6 +244,14 @@ def generate_launch_description():
         condition=IfCondition(use_rviz)
     )
     
+    # Include diagnostics launch - always run
+    diagnostics_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(robot_killer_dir, 'launch', 'diagnostics.launch.py')]),
+        launch_arguments={
+            'use_sim_time': use_sim_time
+        }.items()
+    )
+    
     return LaunchDescription([
         # Launch arguments
         DeclareLaunchArgument(
@@ -323,5 +331,8 @@ def generate_launch_description():
         autonomous_nodes,
         
         # Visualization
-        rviz_launch
+        rviz_launch,
+        
+        # Add diagnostics
+        diagnostics_launch
     ]) 
